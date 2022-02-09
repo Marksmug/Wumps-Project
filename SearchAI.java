@@ -102,6 +102,7 @@ class State implements Cloneable{
     public void grabGold() {this.goldTile = null;}
 
     @Override
+    //compare the members value between two State objects
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -110,6 +111,7 @@ class State implements Cloneable{
     }
 
     @Override
+    //compute the hashcode of a State object
     public int hashCode() {
         int result = Objects.hash(agentDir, pitNumber, colDimension, rowDimension);
         result = 31 * result + Arrays.hashCode(agentTile);
@@ -120,10 +122,15 @@ class State implements Cloneable{
     }
 
     @Override
+    //deep clone a State object
     protected Object clone() {
         State s = null;
         try {
             s = (State) super.clone();
+            s.agentTile = agentTile.clone();
+            s.goldTile = goldTile.clone();
+            s.wumpsTile =wumpsTile.clone();
+            s.pitsTile = pitsTile.clone();
         }catch (CloneNotSupportedException e){
             e.printStackTrace();
         }
@@ -383,9 +390,9 @@ public class SearchAI extends Agent {
         s1 = p.Result(s1, Action.TURN_RIGHT);
         s1 = p.Result(s1, Action.TURN_RIGHT);
         s1 = p.Result(s1, Action.TURN_RIGHT);
-        s1.setGoldTile(3,2);
+        //s1.setGoldTile(3,2);
         //s1 = p.Result(s1, Action.FORWARD);
-        s1 = p.Result(s1, Action.SHOOT);
+        //s1 = p.Result(s1, Action.SHOOT);
         System.out.println("goldtile is : "+ s1.goldTile[0] +"，"+ s1.goldTile[1]);
         System.out.println("agentTile is : "+ s1.agentTile[0] + ", " + s1.agentTile[1]);
         //System.out.println("wumpsTile is : "+ s.wumpsTile[0] +"，"+ s.wumpsTile[1]);
