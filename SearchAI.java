@@ -142,6 +142,10 @@ class Problem extends Agent{
     State INITIAL;
 
     //Goal test function: return true if there is no gold in current state, otherwise false
+    public void setINITIAL(State s){
+        this.INITIAL = s;
+    }
+
     public boolean isGoal(State s){
         if (s.goldTile == null){
             return  true;
@@ -286,6 +290,7 @@ class Problem extends Agent{
         return availableActions;
     }
 
+    //Result function: return a resulting state given a state and a action
     public State Result(State s, Action a)  {
         State newS = (State) s.clone();
         //if action is turn right, agent turn right
@@ -347,7 +352,7 @@ class Problem extends Agent{
         return  newS;
     }
 
-
+    //Actioncost function: return a cost given a action
     public int Actioncost(Action a){
         //if action is shoot, cost is 10, otherwise 1
         if (a == Action.SHOOT){
@@ -370,8 +375,42 @@ public class SearchAI extends Agent {
     public SearchAI(World.Tile[][] board) {
 
         /* The world is board[coloumn][row] with initial position (bottom left) being board[0][0] */
+        /* Set the intial state for the problem */
+        Problem p = new Problem();
+        State s = new State();
+        int[][] pits = new int[16][2];
+        int pitNumber = 0;
+        //agent always start from (0,0)
+        s.setAgentTile(0,0);
+        //agent always faces right at beginning
+        s.setAgentDir(0);
+        //extract goldTile, wumpsTile, pitTiles from the board
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                if (board[i][j].getGold() == true){
+                    s.setGoldTile(i, j);
+                }
+                if (board[i][j].getWumpus() == true){
+                    s.setWumpsTile(i, j);
+                }
+                if (board[i][j].getPit() == true){
+                   pits[pitNumber][0] = i;
+                   pits[pitNumber][1] = j;
+                   pitNumber++;
+                }
+            }
+        }
+        s.setPitNumber(pitNumber);
+        s.setPitsTile(pits);
+        p.setINITIAL(s);
+
+        /* Start the algorithm
+
+
+
 
         //below are test code
+        /*
         Problem p = new Problem();
         State s = new State();
         int[][] pit = {{0,1}, {3,2}};
@@ -386,10 +425,10 @@ public class SearchAI extends Agent {
         System.out.println("agentTile is : "+ s.agentTile[0] + ", " + s.agentTile[1]);
         State s1 = new State();
         s1 = p.Result(s, Action.GRAB);
-        s1 = p.Result(s1, Action.TURN_RIGHT);
-        s1 = p.Result(s1, Action.TURN_RIGHT);
-        s1 = p.Result(s1, Action.TURN_RIGHT);
-        s1 = p.Result(s1, Action.TURN_RIGHT);
+        //s1 = p.Result(s1, Action.TURN_RIGHT);
+        //s1 = p.Result(s1, Action.TURN_RIGHT);
+        //s1 = p.Result(s1, Action.TURN_RIGHT);
+        //s1 = p.Result(s1, Action.TURN_RIGHT);
         //s1.setGoldTile(3,2);
         //s1 = p.Result(s1, Action.FORWARD);
         //s1 = p.Result(s1, Action.SHOOT);
@@ -405,6 +444,10 @@ public class SearchAI extends Agent {
         //for (int i = 0; i < actions.size(); i++) {
         //    System.out.println(actions.get(i));
         //}
+
+         */
+
+
 
 
        LinkedList<Action> plan;
