@@ -3,8 +3,7 @@ package fullObservability;
 import wumpus.Agent;
 import wumpus.World;
 
-import java.util.LinkedList;
-import java.util.ListIterator;
+import java.util.*;
 
 
 public class SearchAI extends Agent {
@@ -19,19 +18,19 @@ public class SearchAI extends Agent {
         int[][] pits = new int[16][2];
         int pitNumber = 0;
         //agent always start from (0,0)
-        s.setAgentTile(0,0);
+        s.setAgentTile(0, 0);
         //agent always faces right at beginning
         s.setAgentDir(0);
         //extract goldTile, wumpsTile, pitTiles from the board
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
-                if (board[i][j].getGold() == true){
+                if (board[i][j].getGold() == true) {
                     s.setGoldTile(i, j);
                 }
-                if (board[i][j].getWumpus() == true){
+                if (board[i][j].getWumpus() == true) {
                     s.setWumpsTile(i, j);
                 }
-                if (board[i][j].getPit() == true){
+                if (board[i][j].getPit() == true) {
                     pits[pitNumber][0] = i;
                     pits[pitNumber][1] = j;
                     pitNumber++;
@@ -86,20 +85,50 @@ public class SearchAI extends Agent {
 
         // Remove the code below //
         plan = new LinkedList<Action>();
-        for (int i = 0; i<8; i++)
+        for (int i = 0; i < 8; i++)
             plan.add(Action.FORWARD);
         plan.add(Action.TURN_LEFT);
         plan.add(Action.TURN_LEFT);
-        for (int i = 10; i<18; i++)
+        for (int i = 10; i < 18; i++)
             plan.add(Action.FORWARD);
         plan.add(Action.CLIMB);
 
 
-
-
-
         // This must be the last instruction.
         planIterator = plan.listIterator();
+    }
+
+
+    private Node bestFirstSearch(Problem problem) {
+        Node node = new Node(problem.INITIAL, null);
+        PriorityQueue<Node> frontier = new PriorityQueue<>();
+        frontier.add(node);
+        HashMap<State, Node> reached = new HashMap<>();
+        while (!frontier.isEmpty()) {
+            Node currentNode = frontier.poll();
+            if (problem.isGoal(currentNode.getState())) return currentNode;
+            for (Node child : expand(problem, currentNode)) {
+                State state = child.getState();
+                if (!reached.containsKey(state) || child.getPathCost() < reached.get(state).getPathCost()) {
+                    reached.put(state, child);
+                    frontier.add(child);
+                }
+            }
+        }
+        return null;
+    }
+
+    private List<Node> expand(Problem problem, Node node) {
+        ArrayList<Node> expandedNodes = new ArrayList<>();
+        State state = node.getState();
+        State nextState;
+        int cost;
+        for (Action action : problem.Actions(state)) {
+            nextState = problem.Result(state, action);
+            cost = node.getPathCost() + problem.Actioncost(action);
+            expandedNodes.add(new Node(nextState, action, node, cost));
+        }
+        return expandedNodes;
     }
 
 
@@ -108,9 +137,8 @@ public class SearchAI extends Agent {
         return planIterator.next();
     }
 
-    public static void printDir(State s){
-        switch (s.agentDir)
-        {
+    public static void printDir(State s) {
+        switch (s.agentDir) {
             case 0:
                 System.out.println("AgentDir: Right");
                 break;

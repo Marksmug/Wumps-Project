@@ -4,7 +4,7 @@ import com.android.internal.util.Objects;
 
 import java.util.*;
 
-class State implements Cloneable{
+class State implements Cloneable {
     int[] agentTile;    //current position of Agent
     int[] wumpsTile;    //position of wumps
     int[] goldTile;     //position of gold
