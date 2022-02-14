@@ -95,7 +95,7 @@ class State implements Cloneable{
 
     //set wumpsTile to null
     public void killWumps(){
-        this.wumpsTile = null;
+        setWumpsTile(-1, -1);
     }
 
     //set goldTile to null
