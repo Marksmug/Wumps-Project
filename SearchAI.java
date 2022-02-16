@@ -113,9 +113,10 @@ class State implements Cloneable{
     @Override
     //compute the hashcode of a State object
     public int hashCode() {
-        int result = Objects.hash(agentDir, pitNumber, colDimension, rowDimension);
+        //int result = Objects.hash(pitNumber, colDimension, rowDimension);
+        int result = 0;
         result = 31 * result + Arrays.hashCode(agentTile);
-        result = 31 * result + Arrays.hashCode(wumpsTile);
+        //result = 31 * result + Arrays.hashCode(wumpsTile);
         result = 31 * result + Arrays.hashCode(goldTile);
         result = 31 * result + Arrays.hashCode(pitsTile);
         return result;
@@ -129,7 +130,7 @@ class State implements Cloneable{
             s = (State) super.clone();
             s.agentTile = agentTile.clone();
             s.goldTile = goldTile.clone();
-            s.wumpsTile =wumpsTile.clone();
+            s.wumpsTile = wumpsTile.clone();
             s.pitsTile = pitsTile.clone();
         }catch (CloneNotSupportedException e){
             e.printStackTrace();
@@ -292,6 +293,9 @@ class Problem extends Agent{
 
     //Result function: return a resulting state given a state and a action
     public State Result(State s, Action a)  {
+        if (s.wumpsTile == null){
+            System.out.println();
+        }
         State newS = (State) s.clone();
         //if action is turn right, agent turn right
         //0 -> 1, 1 -> 2, 2 -> 3, 3 -> 1
@@ -341,7 +345,7 @@ class Problem extends Agent{
             }
             if(s.agentTile[1] == s.wumpsTile[1]){
                 if((s.agentDir == 0 && s.agentTile[0] < s.wumpsTile[0])
-                ||(s.agentDir == 2 && s.agentTile[0] > s.wumpsTile[0])){
+                        ||(s.agentDir == 2 && s.agentTile[0] > s.wumpsTile[0])){
                     newS.killWumps();
                 }
 
@@ -369,6 +373,58 @@ class Problem extends Agent{
     }
 }
 
+class Node {
+    private State state;
+    private Agent.Action action;
+    private Node parent = null;
+    private int pathCost = 0;
+
+    public Node(State state, Agent.Action action, Node parent, int pathCost) {
+        this.state = state;
+        this.action = action;
+        this.parent = parent;
+        this.pathCost = pathCost;
+    }
+
+    public Node(State state, Agent.Action action) {
+        this.state = state;
+        this.action = action;
+    }
+
+    public State getState() {
+        return state;
+    }
+
+    public void setState(State state) {
+        this.state = state;
+    }
+
+    public Agent.Action getAction() {
+        return action;
+    }
+
+    public void setAction(Agent.Action action) {
+        this.action = action;
+    }
+
+    public Node getParent() {
+        return parent;
+    }
+
+    public void setParent(Node parent) {
+        this.parent = parent;
+    }
+
+    public int getPathCost() {
+        return pathCost;
+    }
+
+    public void setPathCost(int pathCost) {
+        this.pathCost = pathCost;
+    }
+
+}
+
 public class SearchAI extends Agent {
     private ListIterator<Action> planIterator;
 
@@ -394,9 +450,9 @@ public class SearchAI extends Agent {
                     s.setWumpsTile(i, j);
                 }
                 if (board[i][j].getPit() == true){
-                   pits[pitNumber][0] = i;
-                   pits[pitNumber][1] = j;
-                   pitNumber++;
+                    pits[pitNumber][0] = i;
+                    pits[pitNumber][1] = j;
+                    pitNumber++;
                 }
             }
         }
@@ -405,61 +461,52 @@ public class SearchAI extends Agent {
         p.setINITIAL(s);
 
         /* Start the algorithm
-
-
-
-
-        //below are test code
-        /*
-        Problem p = new Problem();
-        State s = new State();
-        int[][] pit = {{0,1}, {3,2}};
-        s.setPitsTile(pit);
-        s.setPitNumber(pit.length);
-        s.setGoldTile(1,3);
-        s.setAgentDir(2);
-        s.setAgentTile(2,2);
-        s.setWumpsTile(1,2);
-        System.out.println("goldtile is : "+ s.goldTile[0] +"，"+ s.goldTile[1]);
-        System.out.println("wumpsTile is : "+ s.wumpsTile[0] +"，"+ s.wumpsTile[1]);
-        System.out.println("agentTile is : "+ s.agentTile[0] + ", " + s.agentTile[1]);
-        State s1 = new State();
-        s1 = p.Result(s, Action.GRAB);
-        //s1 = p.Result(s1, Action.TURN_RIGHT);
-        //s1 = p.Result(s1, Action.TURN_RIGHT);
-        //s1 = p.Result(s1, Action.TURN_RIGHT);
-        //s1 = p.Result(s1, Action.TURN_RIGHT);
-        //s1.setGoldTile(3,2);
-        //s1 = p.Result(s1, Action.FORWARD);
-        //s1 = p.Result(s1, Action.SHOOT);
-        System.out.println("goldtile is : "+ s1.goldTile[0] +"，"+ s1.goldTile[1]);
-        System.out.println("agentTile is : "+ s1.agentTile[0] + ", " + s1.agentTile[1]);
-        //System.out.println("wumpsTile is : "+ s.wumpsTile[0] +"，"+ s.wumpsTile[1]);
-        //
-        System.out.println(s.equals(s1));
-        //System.out.println(s.wumpsTile);
-
-        //printDir(s1);
-        //ArrayList<Action> actions = p.Actions(s);
-        //for (int i = 0; i < actions.size(); i++) {
-        //    System.out.println(actions.get(i));
-        //}
-
          */
 
+        Node currentNode = bestFirstSearch(p);
+        ArrayList<Action> path = new ArrayList<Action>();
+        while (currentNode != null){
+            path.add(currentNode.getAction());
+            currentNode = currentNode.getParent();
+        }
+        System.out.println();
+        for (int i = 0; i < path.size(); i++) {
+            System.out.println(path.get(i));
+        }
 
 
+        LinkedList<Action> plan;
 
-       LinkedList<Action> plan;
+        // Adding the path to the gold //
+        plan = new LinkedList<Action>();
+        for (int i = path.size() - 1; i >= 0; i--) {
+            if (path.get(i) != null) {
+                plan.add(path.get(i));
+            }
+        }
 
-        // Remove the code below //
-         plan = new LinkedList<Action>();
-         for (int i = 0; i<8; i++)
-             plan.add(Action.FORWARD);
-        plan.add(Action.TURN_LEFT);
-        plan.add(Action.TURN_LEFT);
-        for (int i = 10; i<18; i++)
-            plan.add(Action.FORWARD);
+        // Turn to opposite direction
+        plan.add(Action.TURN_RIGHT);
+        plan.add(Action.TURN_RIGHT);
+
+        //adding the path to the starting point
+        for (int i = 1; i< path.size(); i++)
+            if (path.get(i) != null && path.get(i) != Action.SHOOT){
+                if (path.get(i) == Action.TURN_RIGHT){
+                    plan.add(Action.TURN_LEFT);
+                }
+                else if (path.get(i) == Action.TURN_LEFT){
+                    plan.add(Action.TURN_RIGHT);
+                }
+                //if the last action is turning direction, then skip it
+                else if (i == path.size() - 1 && (path.get(i) == Action.TURN_LEFT || path.get(i) == Action.TURN_RIGHT )){
+                    break;
+                }
+                else{
+                    plan.add(path.get(i));
+                }
+
+            }
         plan.add(Action.CLIMB);
 
 
@@ -470,33 +517,40 @@ public class SearchAI extends Agent {
         planIterator = plan.listIterator();
     }
 
+    private Node bestFirstSearch(Problem problem) {
+        Node node = new Node(problem.INITIAL, null);
+        Queue<Node> frontier = new LinkedList<Node>();
+        frontier.add(node);
+        HashMap<State, Node> reached = new HashMap<>();
+        while (!frontier.isEmpty()) {
+            Node currentNode = frontier.poll();
+            if (problem.isGoal(currentNode.getState())) return currentNode;
+            for (Node child : expand(problem, currentNode)) {
+                State state = child.getState();
+                if (!reached.containsKey(state)  || child.getPathCost() < reached.get(state).getPathCost()) {
+                    reached.put(state, child);
+                    frontier.add(child);
+                }
+            }
+        }
+        return null;
+    }
+
+    private List<Node> expand(Problem problem, Node node) {
+        ArrayList<Node> expandedNodes = new ArrayList<>();
+        State state = node.getState();
+        State nextState;
+        int cost;
+        for (Action action : problem.Actions(state)) {
+            nextState = problem.Result(state, action);
+            cost = node.getPathCost() + problem.Actioncost(action);
+            expandedNodes.add(new Node(nextState, action, node, cost));
+        }
+        return expandedNodes;
+    }
 
     @Override
     public Agent.Action getAction(boolean stench, boolean breeze, boolean glitter, boolean bump, boolean scream) {
         return planIterator.next();
     }
 
-    public static void printDir(State s){
-        switch (s.agentDir)
-        {
-            case 0:
-                System.out.println("AgentDir: Right");
-                break;
-
-            case 1:
-                System.out.println("AgentDir: Down");
-                break;
-
-            case 2:
-                System.out.println("AgentDir: Left");
-                break;
-
-            case 3:
-                System.out.println("AgentDir: Up");
-                break;
-
-            default:
-                System.out.println("AgentDir: Invalid");
-        }
-    }
-}
