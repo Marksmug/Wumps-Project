@@ -14,6 +14,7 @@ class State implements Cloneable{
     int pitNumber;      //number of pits
     int colDimension;   //dimension of column
     int rowDimension;   //dimension of row
+    boolean agentAlive;  //whether agent is alive
 
     public State(){
         this.agentTile = new int[2];
@@ -22,9 +23,11 @@ class State implements Cloneable{
         this.pitsTile = null;
         this.agentDir = -1;
         this.pitNumber = -1;
-        this.colDimension = 4;
-        this.rowDimension = 4;
+        this.colDimension = 0;
+        this.rowDimension = 0;
+        this.agentAlive = true;
     }
+
     public int[] getAgentTile() {
         return agentTile;
     }
@@ -55,6 +58,10 @@ class State implements Cloneable{
 
     public int getRowDimension() {
         return rowDimension;
+    }
+
+    public boolean isAgentAlive() {
+        return agentAlive;
     }
 
     public void setAgentTile(int col, int row) {
@@ -93,13 +100,20 @@ class State implements Cloneable{
         this.rowDimension = rowDimension;
     }
 
+    public void setAgentAlive(boolean death){
+        this.agentAlive = death;
+    }
+
     //set wumpsTile to null
+    public void agentDie (){
+        setAgentAlive(false);
+    }
     public void killWumps(){
         setWumpsTile(-1, -1);
     }
 
     //set goldTile to null
-    public void grabGold() {this.goldTile = null;}
+    public void grabGold() {setGoldTile(-1, -1);}
 
     @Override
     //compare the members value between two State objects
@@ -107,16 +121,16 @@ class State implements Cloneable{
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         State state = (State) o;
-        return agentDir == state.agentDir && pitNumber == state.pitNumber && colDimension == state.colDimension && rowDimension == state.rowDimension && Arrays.equals(agentTile, state.agentTile) && Arrays.equals(wumpsTile, state.wumpsTile) && Arrays.equals(goldTile, state.goldTile) && Arrays.equals(pitsTile, state.pitsTile);
+        return agentAlive == state.agentAlive && agentDir == state.agentDir && pitNumber == state.pitNumber && colDimension == state.colDimension && rowDimension == state.rowDimension && Arrays.equals(agentTile, state.agentTile) && Arrays.equals(wumpsTile, state.wumpsTile) && Arrays.equals(goldTile, state.goldTile) && Arrays.equals(pitsTile, state.pitsTile);
     }
 
     @Override
     //compute the hashcode of a State object
     public int hashCode() {
         //int result = Objects.hash(pitNumber, colDimension, rowDimension);
-        int result = 0;
+        int result = Objects.hash(agentAlive);
         result = 31 * result + Arrays.hashCode(agentTile);
-        //result = 31 * result + Arrays.hashCode(wumpsTile);
+        result = 31 * result + Arrays.hashCode(wumpsTile);
         result = 31 * result + Arrays.hashCode(goldTile);
         result = 31 * result + Arrays.hashCode(pitsTile);
         return result;
@@ -148,7 +162,8 @@ class Problem extends Agent{
     }
 
     public boolean isGoal(State s){
-        if (s.goldTile == null){
+        //if the gold is grabbed and the agent is alive, return true
+        if (s.goldTile[0] == -1 && s.goldTile[1] == -1 && s.agentAlive == true){
             return  true;
         }
         else{
@@ -167,135 +182,11 @@ class Problem extends Agent{
         availableActions.add(Action.SHOOT);
         availableActions.add(Action.CLIMB);
 
-        //case: agent is in the gold tile
-        //agent can only grab the gold
-        if (s.agentTile[0] == s.goldTile[0] && s.agentTile[1] == s.goldTile[1]){
-            availableActions.clear();
-            availableActions.add(Action.GRAB);
-            return availableActions;
-        }
-
-        //case below: agent is not in the gold tile
-        //agent can not grab
-        availableActions.remove(Action.GRAB);
-
-
-        if (s.agentTile[0] != 0 || s.agentTile[1] != 0){
-            availableActions.remove(Action.CLIMB);
-        }
-        //case: there is a wumps in front of agent
-        //agent can not move forward
-
-        if (s.agentDir == 0) {
-            if (s.wumpsTile != null){
-                if ((s.agentTile[0] + 1) == s.wumpsTile[0] && s.agentTile[1]  == s.wumpsTile[1]) {
-                    availableActions.remove(Action.FORWARD);
-                }
-            }
-            for (int i = 0; i < s.pitNumber; i++) {
-                if ((s.agentTile[0] + 1) == s.pitsTile[i][0] && s.agentTile[1]  == s.pitsTile[i][1]) {
-                    if (availableActions.contains(Action.FORWARD))
-                        availableActions.remove(Action.FORWARD);
-                }
-            }
-        }
-        if (s.agentDir == 1) {
-            if (s.wumpsTile != null) {
-                if (s.agentTile[0] == s.wumpsTile[0] && (s.agentTile[1] - 1) == s.wumpsTile[1]) {
-                    availableActions.remove(Action.FORWARD);
-                }
-            }
-            for (int i = 0; i < s.pitNumber; i++) {
-                if (s.agentTile[0] == s.pitsTile[i][0] && (s.agentTile[1] - 1)  == s.pitsTile[i][1]) {
-                    if (availableActions.contains(Action.FORWARD))
-                        availableActions.remove(Action.FORWARD);
-                }
-            }
-        }
-        if (s.agentDir == 2) {
-            if (s.wumpsTile != null) {
-                if ((s.agentTile[0] - 1) == s.wumpsTile[0] && s.agentTile[1] == s.wumpsTile[1]) {
-                    availableActions.remove(Action.FORWARD);
-                }
-            }
-            for (int i = 0; i < s.pitNumber; i++) {
-                if ((s.agentTile[0] - 1) == s.pitsTile[i][0] && s.agentTile[1]   == s.pitsTile[i][1]) {
-                    if (availableActions.contains(Action.FORWARD))
-                        availableActions.remove(Action.FORWARD);
-                }
-            }
-        }
-        if (s.agentDir == 3) {
-            if (s.wumpsTile != null) {
-                if (s.agentTile[0] == s.wumpsTile[0] && (s.agentTile[1] + 1) == s.wumpsTile[1]) {
-                    availableActions.remove(Action.FORWARD);
-                }
-            }
-            for (int i = 0; i < s.pitNumber; i++) {
-                if (s.agentTile[0] == s.pitsTile[i][0] && (s.agentTile[1] + 1)  == s.pitsTile[i][1]) {
-                    if (availableActions.contains(Action.FORWARD))
-                        availableActions.remove(Action.FORWARD);
-                }
-            }
-        }
-        //case:agent is in the left most column and it faces left
-        // agent can not move forward
-        if (s.agentTile[0] == 0 && s.agentDir == 2) {
-            if (availableActions.contains(Action.FORWARD))
-                availableActions.remove(Action.FORWARD);
-        }
-        //case:agent is in the right most column and it faces right
-        // agent can not move forward
-        if (s.agentTile[0] == s.colDimension - 1 && s.agentDir == 0){
-            if (availableActions.contains(Action.FORWARD))
-                availableActions.remove(Action.FORWARD);
-        }
-        //case:agent is in the bottom row and it faces down
-        // agent can not move forward
-        if (s.agentTile[1] == 0 && s.agentDir == 1) {
-            if (availableActions.contains(Action.FORWARD))
-                availableActions.remove(Action.FORWARD);
-        }
-        //case:agent is in the top row and it faces up
-        // agent can not move forward
-        if (s.agentTile[1] == s.rowDimension - 1 && s.agentDir == 3) {
-            if (availableActions.contains(Action.FORWARD))
-                availableActions.remove(Action.FORWARD);
-        }
-
-        //case: wumps is not in the same row or column
-        if (s.wumpsTile != null) {
-            if (s.agentTile[0] != s.wumpsTile[0] && s.agentTile[1] != s.wumpsTile[1]) {
-                availableActions.remove(Action.SHOOT);
-            }
-            //case below: wumps is in the same row or colum
-            //case: wumps is not in front of agent
-            if (!(
-                    (s.agentDir == 0 && s.agentTile[0] < s.wumpsTile[0]) ||
-                            (s.agentDir == 1 && s.agentTile[1] > s.wumpsTile[1]) ||
-                            (s.agentDir == 2 && s.agentTile[0] > s.wumpsTile[0]) ||
-                            (s.agentDir == 3 && s.agentTile[1] < s.wumpsTile[1])
-            )) {
-                availableActions.remove(Action.SHOOT);
-            }
-        }
-
-
-
-
-
-
-
-
-
         return availableActions;
     }
 
     //Result function: return a resulting state given a state and a action
     public State Result(State s, Action a)  {
-        if (s.wumpsTile == null){
-            System.out.println();
-        }
         State newS = (State) s.clone();
         //if action is turn right, agent turn right
         //0 -> 1, 1 -> 2, 2 -> 3, 3 -> 1
@@ -313,16 +204,36 @@ class Problem extends Agent{
             int oldRow = newS.agentTile[1];
 
             if (s.agentDir == 0) {
-                newS.setAgentTile(oldCol + 1, oldRow);
+                if (oldCol + 1 <= s.colDimension - 1) {
+                    newS.setAgentTile(oldCol + 1, oldRow);
+                    if (checkPits(newS) || checkWumps(newS)) {
+                        newS.agentDie();
+                    }
+                }
             }
             if (s.agentDir == 1) {
-                newS.setAgentTile(oldCol, oldRow - 1);
+                if (oldRow - 1 >= 0) {
+                    newS.setAgentTile(oldCol, oldRow - 1);
+                    if (checkPits(newS) || checkWumps(newS)) {
+                        newS.agentDie();
+                    }
+                }
             }
             if (s.agentDir == 2) {
-                newS.setAgentTile(oldCol - 1, oldRow);
+                if (oldCol - 1 >= 0) {
+                    newS.setAgentTile(oldCol - 1, oldRow);
+                    if (checkPits(newS) || checkWumps(newS)) {
+                        newS.agentDie();
+                    }
+                }
             }
             if (s.agentDir == 3) {
-                newS.setAgentTile(oldCol, oldRow + 1);
+                if(oldRow + 1 <= s.rowDimension - 1) {
+                    newS.setAgentTile(oldCol, oldRow + 1);
+                    if (checkPits(newS) || checkWumps(newS)) {
+                        newS.agentDie();
+                    }
+                }
             }
 
 
@@ -365,6 +276,22 @@ class Problem extends Agent{
         else{
             return 1;
         }
+    }
+
+    public boolean checkWumps(State s){
+        if (s.agentTile[0] == s.wumpsTile[0] && s.agentTile[1] == s.wumpsTile[1]){
+            return true;
+        }
+        return false;
+    }
+
+    public  boolean checkPits(State s){
+        for (int i = 0; i < s.pitNumber; i++) {
+            if (s.agentTile[0] == s.pitsTile[i][0] && (s.agentTile[1])  == s.pitsTile[i][1]) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -432,24 +359,29 @@ public class SearchAI extends Agent {
 
         /* The world is board[coloumn][row] with initial position (bottom left) being board[0][0] */
         /* Set the intial state for the problem */
+        int col = board.length;       //get number of column from board
+        int row = board[1].length;    //get number of row from board
         Problem p = new Problem();
         State s = new State();
-        int[][] pits = new int[16][2];
-        int pitNumber = 0;
+        s.setColDimension(col);       //set column dimension for state
+        s.setRowDimension(row);       //set column dimension for state
+        int[][] pits = new int[col * row][2];  //set pits array to record the position for pits
+        int pitNumber = 0;                  //set pitt number
+
         //agent always start from (0,0)
         s.setAgentTile(0,0);
         //agent always faces right at beginning
         s.setAgentDir(0);
         //extract goldTile, wumpsTile, pitTiles from the board
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                if (board[i][j].getGold() == true){
+        for (int i = 0; i < col; i++) {
+            for (int j = 0; j < row; j++) {
+                if (board[i][j].getGold() == true) {
                     s.setGoldTile(i, j);
                 }
-                if (board[i][j].getWumpus() == true){
+                if (board[i][j].getWumpus() == true) {
                     s.setWumpsTile(i, j);
                 }
-                if (board[i][j].getPit() == true){
+                if (board[i][j].getPit() == true) {
                     pits[pitNumber][0] = i;
                     pits[pitNumber][1] = j;
                     pitNumber++;
@@ -489,7 +421,7 @@ public class SearchAI extends Agent {
         plan.add(Action.TURN_RIGHT);
         plan.add(Action.TURN_RIGHT);
 
-        //adding the path to the starting point
+        //adding the path to the starting point from gold tile
         for (int i = 1; i< path.size(); i++)
             if (path.get(i) != null && path.get(i) != Action.SHOOT){
                 if (path.get(i) == Action.TURN_RIGHT){
