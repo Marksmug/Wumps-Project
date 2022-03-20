@@ -204,17 +204,17 @@ public class MyAI extends Agent
 
 
 		//testing move
-		if(currentX == 0 && currentY == 0 && currentDir == 0){
-			plan.add(Action.TURN_LEFT);
-			plan.add(Action.FORWARD);
-			plan.add(Action.TURN_RIGHT);
-			plan.add(Action.FORWARD);
-			plan.add(Action.FORWARD);
-			plan.add(Action.FORWARD);
-			plan.add(Action.FORWARD);
-			plan.add(Action.FORWARD);
+		//if(currentX == 0 && currentY == 0 && currentDir == 0){
+		//	plan.add(Action.TURN_LEFT);
+		//	plan.add(Action.FORWARD);
+		//	plan.add(Action.TURN_RIGHT);
+		///	plan.add(Action.FORWARD);
+		//	plan.add(Action.FORWARD);
+		//	plan.add(Action.FORWARD);
+		//	plan.add(Action.FORWARD);
+		//	plan.add(Action.FORWARD);
 
-		}
+		//}
 		SatSolver.setDefaultSolver(new Sat4jSolver());
 
 
@@ -224,7 +224,18 @@ public class MyAI extends Agent
 		//tell(stench, breeze, glitter, scream);
 		Proposition Glitter = new Proposition("glitter" + currentX + "_" + currentY);
 		Proposition haveArrow = new Proposition("haveArrow");
-		//Proposition OK = new Proposition(("ok" + currentX + "_" + currentY));
+		Proposition OK1 = new Proposition(("ok" + (currentX+1) + "_" + currentY));
+		Proposition OK00 = new Proposition(("ok" + 0 + "_" + 0));
+		Proposition OK01 = new Proposition(("ok" + 0 + "_" + 1));
+		Proposition OK10 = new Proposition(("ok" + 1 + "_" + 0));
+		Proposition OK11 = new Proposition(("ok" + 1 + "_" + 1));
+		Proposition OK21 = new Proposition(("ok" + 2 + "_" + 1));
+		//kb.add(OK1);
+		kb.add(OK00);
+		kb.add(OK01);
+		kb.add(OK10);
+		kb.add(OK11);
+		kb.add(OK21);
 
 
 
@@ -244,11 +255,11 @@ public class MyAI extends Agent
 		//if plan is empty, find a path to an unvisited and safe square
 		else if(plan.isEmpty()){
 			int[] current = {currentX, currentY};
-			int[] goal = {0,0};
+			int[] goal = null;   // * change
 
 			//finding an unvisited and safe square
-			for (int i = 0; i < currentX+1; i++) {
-				for (int j = 0; j < currentY+1; j++) {
+			for (int i = 0; i <= currentX+1; i++) { //* changed
+				for (int j = 0; j <= currentY+1; j++) { //* changed
 					Proposition unvisited = new Proposition("unvisited" + i + "_" + j);
 					Proposition OK = new Proposition("ok" + i + "_" + j);
 					if (reasoner.query(kb, unvisited) && reasoner.query(kb, OK)){
@@ -258,10 +269,12 @@ public class MyAI extends Agent
 					}
 				}
 			}
-			MAP map = generateMap();
-			LinkedList<Action> route = plan_route(current, currentDir, goal, map);
-			for (int i = 0; i < route.size(); i++) {
-				plan.add(route.get(i));
+			if (goal != null) {       //* change
+				MAP map = generateMap();
+				LinkedList<Action> route = plan_route(current, currentDir, goal, map);
+				for (int i = 0; i < route.size(); i++) {
+					plan.add(route.get(i));
+				}
 			}
 		}
 
@@ -310,7 +323,8 @@ public class MyAI extends Agent
 
 	//plan_route
 	private LinkedList<Action> plan_route(int[] current, int direction , int[] starting, MAP map) {
-		LinkedList<Action> route = searchAI(current, direction, starting, map);
+		SearchAI AI = new SearchAI(current, direction, starting, map.board);    //* change
+		LinkedList<Action> route = AI.plan;    //* change
 		return route;
 	}
 
@@ -339,8 +353,8 @@ public class MyAI extends Agent
 		map.setBoard();
 
 		//set all square in the map
-		for (int i = 0; i < mapX; i++) {
-			for (int j = 0; j < mapY; j++) {
+		for (int i = 0; i <= mapX; i++) {   //* changed
+			for (int j = 0; j <= mapY; j++) { //* changed
 				Proposition OK = new Proposition("ok" + i +"_" + j);
 				if(!reasoner.query(kb, OK)){
 					map.setPit(i,j);
