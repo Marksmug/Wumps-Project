@@ -395,78 +395,22 @@ public class MyAI extends Agent {
     //The direction the agent is facing: 0 - right, 1 - down, 2 - left, 3 - up
     private List<Action> turnToWumpusSquare(int wumpusDir) {
         List<Action> actions = Collections.emptyList();
-        switch (currentDir) {
-            case 0:
-                if (wumpusDir == 0)
-                    return actions;
-                if (wumpusDir == 1) {
-                    actions.add(TURN_RIGHT);
-                    return actions;
-                }
-                if (wumpusDir == 2) {
-                    actions.add(TURN_LEFT);
-                    actions.add(TURN_LEFT);
-                    return actions;
-                }
-                if (wumpusDir == 3) {
-                    actions.add(TURN_LEFT);
-                    return actions;
-                }
-                break;
-            case 1:
-                if (wumpusDir == 0) {
-                    actions.add(TURN_LEFT);
-                    return actions;
-                }
-                if (wumpusDir == 1) {
-                    return actions;
-                }
-                if (wumpusDir == 2) {
-                    actions.add(TURN_RIGHT);
-                    return actions;
-                }
-                if (wumpusDir == 3) {
-                    actions.add(TURN_LEFT);
-                    actions.add(TURN_LEFT);
-                    return actions;
-                }
-                break;
-            case 2:
-                if (wumpusDir == 0) {
-                    actions.add(TURN_LEFT);
-                    actions.add(TURN_LEFT);
-                    return actions;
-                }
-                if (wumpusDir == 1) {
-                    actions.add(TURN_LEFT);
-                    return actions;
-                }
-                if (wumpusDir == 2) {
-                    return actions;
-                }
-                if (wumpusDir == 3) {
-                    actions.add(TURN_RIGHT);
-                    return actions;
-                }
-                break;
-            case 3:
-                if (wumpusDir == 0) {
-                    actions.add(TURN_RIGHT);
-                    return actions;
-                }
-                if (wumpusDir == 1) {
-                    actions.add(TURN_LEFT);
-                    actions.add(TURN_LEFT);
-                    return actions;
-                }
-                if (wumpusDir == 2) {
-                    actions.add(TURN_LEFT);
-                    return actions;
-                }
-                if (wumpusDir == 3) {
-                    return actions;
-                }
-                break;
+        int value = currentDir - wumpusDir;
+        if (value == 0) {
+            return actions;
+        }
+        if (value == 1) {
+            actions.add(TURN_LEFT);
+            return actions;
+        }
+        if (value == -1 || value == 3) {
+            actions.add(TURN_RIGHT);
+            return actions;
+        }
+        if (value == -2 || value == 2) {
+            actions.add(TURN_LEFT);
+            actions.add(TURN_LEFT);
+            return actions;
         }
         return actions;
     }
