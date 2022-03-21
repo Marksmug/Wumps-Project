@@ -1,7 +1,7 @@
 package partialObservability;
 
+import libcore.util.Objects;
 import wumpus.Agent;
-import wumpus.World;
 
 import java.util.*;
 
@@ -128,7 +128,7 @@ class State implements Cloneable{
     //compute the hashcode of a State object
     public int hashCode() {
         //int result = Objects.hash(pitNumber, colDimension, rowDimension);
-        int result = Objects.hash(agentAlive);
+        int result = Objects.hashCode(agentAlive);
         result = 31 * result + Arrays.hashCode(agentTile);
         result = 31 * result + Arrays.hashCode(wumpsTile);
         result = 31 * result + Arrays.hashCode(goldTile);
