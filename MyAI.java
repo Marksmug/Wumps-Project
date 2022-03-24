@@ -51,15 +51,18 @@ class MAP {
 
 public class MyAI extends Agent
 {
-	int currentX = 0;
-	int currentY = 0;
-	int currentDir = 0;
-	int maxX = 0;
-	int maxY = 0;
+	int currentX;
+	int currentY;
+	int currentDir;
+	int maxX;
+	int maxY;
+	boolean findMaxX;
+	boolean findMaxY;
 	Queue<Action> plan = new LinkedList<Action>();
 
 	AbstractPlReasoner reasoner = new SatReasoner();
 	PlBeliefSet kb = new PlBeliefSet();
+
 
 	public void setCurrentX(int currentX) {
 		this.currentX = currentX;
@@ -86,7 +89,7 @@ public class MyAI extends Agent
 				kb.add(unvisited2);
 			}
 			//if there is no unvisited3 in kb and X of unvisited is smaller than maxX
-			if(!kb.contains(unvisited3) && !kb.contains(negUnvisited3) && (maxX == 0 || tileRight[0] < maxX)){
+			if(!kb.contains(unvisited3) && !kb.contains(negUnvisited3) && (tileRight[0] <= maxX)){
 				kb.add(unvisited3);
 			}
 			return;
@@ -103,7 +106,7 @@ public class MyAI extends Agent
 			Proposition unvisited3 = new Proposition("unvisited" + toString(tileRight[0]) + "_" + toString(tileRight[1]));
 			Negation negUnvisited3 = new Negation(unvisited3);
 
-			if(!kb.contains(unvisited1) && !kb.contains(negUnvisited1) && (maxY == 0 || tileUp[1] < maxY)){
+			if(!kb.contains(unvisited1) && !kb.contains(negUnvisited1) && tileUp[1] <= maxY){
 				kb.add(unvisited1);
 			}
 			if(!kb.contains(unvisited2) && !kb.contains(negUnvisited2)){
@@ -128,7 +131,7 @@ public class MyAI extends Agent
 			Proposition unvisited3 = new Proposition("unvisited" + toString(tileRight[0]) + "_" + toString(tileRight[1]));
 			Negation negUnvisited3 = new Negation(unvisited3);
 			Proposition unvisited4 = new Proposition("unvisited" + toString(tileLeft[0]) + "_" + toString(tileLeft[1]));
-			Negation negUnvisited4 = new Negation(unvisited2);
+			Negation negUnvisited4 = new Negation(unvisited4);
 
 			if(!kb.contains(unvisited1) && !kb.contains(negUnvisited1)){
 				kb.add(unvisited1);
@@ -150,17 +153,25 @@ public class MyAI extends Agent
 	}
 	//function 2 to add unvisit
 	public void unvisit(boolean bump){
-		//if perceive bump and direction is right, set maxX and remove beyond unvisited
-		if (maxX == 0 && bump && currentDir == 0){
+		if(currentX + 1 > maxX && !findMaxX){
+			maxX = currentX + 1;
+		}
+		if(currentY + 1 > maxY && !findMaxY){
+			maxY = currentY + 1;
+		}
+		//if does not find maxX, perceive bump and direction is right, set maxX and remove beyond unvisited
+		if (!findMaxX && bump && currentDir == 0){
 			currentX--;               //agent does not move forward, currentX-1
 			maxX = currentX;
+			findMaxX = true;
 			Proposition beyond = new Proposition("unvisited" + toString(maxX+1) + "_" + currentY);
 			kb.remove(beyond);
 		}
 		//if perceive bump and direction is up, set maxY and remove beyond unvisited
-		if (maxY == 0 && bump && currentDir == 3){
+		if (!findMaxY && bump && currentDir == 3){
 			currentY--;               //agent does not move forward, currentX-1
 			maxY = currentY;
+			findMaxY = true;
 			Proposition beyond = new Proposition("unvisited" + currentX + "_" + toString(maxY+1));
 			kb.remove(beyond);
 		}
@@ -195,6 +206,27 @@ public class MyAI extends Agent
 
 	public MyAI ( )
 	{
+		currentX = 0;
+		currentY = 0;
+		currentDir = 0;
+		maxX = 0;
+		maxY = 0;
+		findMaxX = false;
+		findMaxY =false;
+		Proposition W0_0 = new Proposition("W0_0");
+		Proposition P0_0 = new Proposition("P0_0");
+		Proposition Scream = new Proposition("Scream");
+		Proposition haveArrow = new Proposition("haveArrow");
+		Negation noW0_0 = new Negation(W0_0);
+		Negation noP0_0 = new Negation(P0_0);
+		Negation noScream = new Negation(Scream);
+
+		//initialize the knowledge base
+		kb.add(noScream);
+		kb.add(noW0_0);
+		kb.add(noP0_0);
+		kb.add(haveArrow);
+
 	}
 
 	public Agent.Action getAction
@@ -209,38 +241,51 @@ public class MyAI extends Agent
 
 
 		//testing move
-		//if(currentX == 0 && currentY == 0 && currentDir == 0){
-		//	plan.add(Action.TURN_LEFT);
-		//	plan.add(Action.FORWARD);
-		//	plan.add(Action.TURN_RIGHT);
-		///	plan.add(Action.FORWARD);
-		//	plan.add(Action.FORWARD);
-		//	plan.add(Action.FORWARD);
-		//	plan.add(Action.FORWARD);
-		//	plan.add(Action.FORWARD);
+		/*
+		if(currentX == 0 && currentY == 0 && currentDir == 0){
+			plan.add(Action.TURN_LEFT);
+			plan.add(Action.FORWARD);
+			plan.add(Action.TURN_RIGHT);
+			plan.add(Action.FORWARD);
+			plan.add(Action.FORWARD);
+			plan.add(Action.FORWARD);
+			plan.add(Action.FORWARD);
+			//plan.add(Action.FORWARD);
+			plan.add(TURN_RIGHT);
+			plan.add(TURN_RIGHT);
+			plan.add(Action.FORWARD);
+			plan.add(Action.FORWARD);
+			plan.add(Action.FORWARD);
+			plan.add(Action.FORWARD);
 
-		//}
+
+		}
+
+		 */
 		SatSolver.setDefaultSolver(new Sat4jSolver());
 
+		//&&
 
 		//adding unvisit square into knowledge base;
 		unvisit(bump);
 		//update the knowledge base by perceptions;  * need a tell function from knowledge base
 		//tell(stench, breeze, glitter, scream);
 		Proposition Glitter = new Proposition("G");
-		Proposition haveArrow = new Proposition("haveArrow");
+		Proposition haveArrow  = new Proposition("haveArrow");
 		Proposition OK1 = new Proposition(("ok" + (currentX+1) + "_" + currentY));
 		Proposition OK00 = new Proposition(("ok" + 0 + "_" + 0));
 		Proposition OK01 = new Proposition(("ok" + 0 + "_" + 1));
 		Proposition OK10 = new Proposition(("ok" + 1 + "_" + 0));
 		Proposition OK11 = new Proposition(("ok" + 1 + "_" + 1));
 		Proposition OK21 = new Proposition(("ok" + 2 + "_" + 1));
-		//kb.add(OK1);
+		kb.add(OK1);
 		kb.add(OK00);
 		kb.add(OK01);
 		kb.add(OK10);
 		kb.add(OK11);
 		kb.add(OK21);
+
+
 
 
 
@@ -263,8 +308,8 @@ public class MyAI extends Agent
 			int[] goal = null;   // * change
 
 			//finding an unvisited and safe square
-			for (int i = 0; i <= currentX+1; i++) { //* changed
-				for (int j = 0; j <= currentY+1; j++) { //* changed
+			for (int i = 0; i <= maxX; i++) { //* changed
+				for (int j = 0; j <= maxY; j++) { //* changed
 					Proposition unvisited = new Proposition("unvisited" + i + "_" + j);
 					Proposition OK = new Proposition("ok" + i + "_" + j);
 					if (reasoner.query(kb, unvisited) && reasoner.query(kb, OK)){
@@ -303,6 +348,7 @@ public class MyAI extends Agent
 				//tell knowledge base that we dont have an arrow anymore
 
 
+
 			} else if (!reasoner.query(kb, rightSquare)) {
 				List<Action> actions = turnToWumpusSquare(0);
 				plan.addAll(actions);
@@ -327,8 +373,8 @@ public class MyAI extends Agent
 			int[] goal = null;   // * change
 
 			//finding an unvisited and not safe square
-			for (int i = 0; i <= currentX + 1; i++) { //* changed
-				for (int j = 0; j <= currentY + 1; j++) { //* changed
+			for (int i = 0; i <= maxX; i++) { //* changed
+				for (int j = 0; j <= maxY; j++) { //* changed
 					Proposition unvisited = new Proposition("unvisited" + i + "_" + j);
 					Proposition OK = new Proposition("!ok" + i + "_" + j);
 					if (reasoner.query(kb, unvisited) && !reasoner.query(kb, OK)) {
@@ -364,18 +410,6 @@ public class MyAI extends Agent
 
 
 
-
-
-
-		//kb.add(pAq);
-
-		//boolean answer = reasoner.query(kb, r);
-		//Action move = plan.poll();
-		System.out.println(scream);
-
-		// Replace this with something more useful...
-
-
 		//update the state of the agent according to the action we made
 		if(!plan.isEmpty()){
 			if(plan.peek() == TURN_LEFT) {
@@ -385,10 +419,10 @@ public class MyAI extends Agent
 				currentDir = (currentDir + 1)%4;
 			}
 			if(plan.peek() == Action.FORWARD){
-				if(currentDir == 0 && (maxX == 0 ||currentX < maxX)) {
+				if(currentDir == 0 && (currentX != maxX)) {
 					currentX++;
 				}
-				else if(currentDir == 3 && (maxY == 0 || currentY < maxY)){
+				else if(currentDir == 3 && (currentY != maxY)){
 					currentY++;
 				}
 				else if(currentDir == 1 && (currentY - 1) >= 0){
@@ -437,13 +471,13 @@ public class MyAI extends Agent
 	//generate map
 	private MAP generateMap(){
 
-		int x = currentX + 1;      //map col is current x + 1
-		int y = currentY + 1;      //map row is current y + 1
-		int mapX;
-		int mapY;
+		//int x = maxX;      //map col is current x + 1
+		//int y = maxY;      //map row is current y + 1
+		int mapX = maxX;
+		int mapY = maxY;
 
 		//if current x + 1 is greater than maxX, map col is maxX
-		if(maxX != 0 && x > maxX){
+		/*if(maxX != 0 && x > maxX){
 			mapX = maxX;
 		}else{
 			mapX = x;
@@ -455,6 +489,8 @@ public class MyAI extends Agent
 		}else{
 			mapY = y;
 		}
+
+		 */
 		MAP map = new MAP(mapX,mapY);
 		map.setBoard();
 
