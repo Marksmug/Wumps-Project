@@ -279,41 +279,56 @@ public class MyAI extends Agent {
                 }
             }
         }
+
         if (plan.isEmpty() && reasoner.query(kb, haveArrow)) {
-            // check if the agent is in the square adjacent to the Wumpus
-            Proposition upperSquare = new Proposition("!W" + currentX + "_" + (currentY + 1));
-            Proposition lowerSquare = new Proposition("!W" + currentX + "_" + (currentY - 1));
-            Proposition rightSquare = new Proposition("!W" + (currentX + 1) + "_" + currentY);
-            Proposition leftSquare = new Proposition("!W" + (currentX - 1) + "_" + currentY);
-
-            if (!reasoner.query(kb, upperSquare)) {
-                List<Action> actions = turnToWumpusSquare(3);
-                plan.addAll(actions);
-                plan.add(Action.SHOOT);
-                //tell knowledge base that we dont have an arrow anymore
-
-            } else if (!reasoner.query(kb, lowerSquare)) {
-                List<Action> actions = turnToWumpusSquare(1);
-                plan.addAll(actions);
-                plan.add(Action.SHOOT);
-                //tell knowledge base that we dont have an arrow anymore
-
-
-            } else if (!reasoner.query(kb, rightSquare)) {
-                List<Action> actions = turnToWumpusSquare(0);
-                plan.addAll(actions);
-                plan.add(Action.SHOOT);
-                //tell knowledge base that we dont have an arrow anymore
-
-            } else if (!reasoner.query(kb, leftSquare)) {
-                List<Action> actions = turnToWumpusSquare(2);
-                plan.addAll(actions);
-                plan.add(Action.SHOOT);
-                //tell knowledge base that we dont have an arrow anymore
-
-            } else {
-                // do nothing
+            int[] current = {currentX, currentY};
+            int closestX = currentX;
+            int closestY = currentY;
+            for (int i = 0; i <= maxX; i++) {
+                for (int j = 0; j <= maxY; j++) {
+                    Proposition wumpus = new Proposition("!W" + maxX + "_" + maxY);
+                    if (!reasoner.query(kb, wumpus)) {
+                        if (Math.abs(i - currentX) < Math.abs(closestX - currentX)) {
+                            closestX = i;
+                        }
+                        if (Math.abs(j - currentY) < Math.abs(closestY - currentY)) {
+                            closestY = j;
+                        }
+                    }
+                }
             }
+            //The direction the agent is facing: 0 - right, 1 - down, 2 - left, 3 - up
+            int wumpusDir;
+            int[] goal;
+            if (Math.abs(closestY - currentY) > Math.abs(closestX - currentX)) {
+                goal = new int[]{closestX, currentY};
+                if(currentX > closestX){
+                    wumpusDir = 2;
+                } else {
+                    wumpusDir = 0;
+                }
+            } else {
+                goal = new int[]{currentX, closestY};
+                if(currentY > closestY){
+                    wumpusDir = 1;
+                } else {
+                    wumpusDir = 3;
+                }
+            }
+
+
+            if (!(goal[0] == currentX && goal[1] == currentY)) {
+                MAP map = generateMap();
+                LinkedList<Action> route = plan_route(current, currentDir, goal, map);
+                for (int i = 0; i < route.size(); i++) {
+                    plan.add(route.get(i));
+                }
+            }
+
+            List<Action> actions = turnToWumpusSquare(wumpusDir);
+            plan.addAll(actions);
+            plan.add(Action.SHOOT);
+            kb.remove(haveArrow);
 
         }
 
@@ -449,8 +464,9 @@ public class MyAI extends Agent {
         //set all square in the map
         for (int i = 0; i <= mapX; i++) {   //* changed
             for (int j = 0; j <= mapY; j++) { //* changed
-                Proposition OK = new Proposition("ok" + i + "_" + j);
-                if (!reasoner.query(kb, OK)) {
+                //Proposition OK = new Proposition("ok" + i + "_" + j);
+                Proposition pit = new Proposition("P" + i + "_" + j);
+                if (reasoner.query(kb, pit)) {
                     map.setPit(i, j);
                 }
             }
