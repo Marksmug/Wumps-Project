@@ -256,7 +256,7 @@ public class MyAI extends Agent
 
 		Proposition s1 = new Proposition(cS);
 		//Middle of World Game
-		if(i-1>0 & j-1>0){
+		if(i>0 & j>0){
 
 			if (!stench){
 
@@ -307,7 +307,7 @@ public class MyAI extends Agent
 			kb.add(tweetyParser.parseFormula("(!" + lP + " && " + "!" +lW + ") => " + lO ));
 			kb.add(tweetyParser.parseFormula("(!" + rP + " && " + "!" +rW + ") => " + rO ));
 			//Update KB When we're in the bottom edge of world
-		} else if (i-1==0 & j-1>0){
+		} else if (i == 0 & j>0){
 
 			if (!stench){
 
@@ -355,7 +355,7 @@ public class MyAI extends Agent
 			kb.add(tweetyParser.parseFormula("(!" + rP + " && " + "!" +rW + ") => " + rO ));
 
 			//Update KB when we're at the left edge of Wumpus World
-		} else if(i-1>0 & j-1==0){
+		} else if(i>0 & j==0){
 
 			if (!stench){
 
@@ -397,11 +397,11 @@ public class MyAI extends Agent
 
 			}
 			else{
-				kb.add(s1);
+				kb.add(b1);
 				kb.add(tweetyParser.parseFormula( tP + " || " + bP  + " || " + rP ));
 			}
-			kb.add(tweetyParser.parseFormula( tP + " || " + bP  + " || " + rP ));
-			kb.add(tweetyParser.parseFormula("(!" + tP + " && " + "!" +tW + ") => " + tO ));
+			//kb.add(tweetyParser.parseFormula( tP + " || " + bP  + " || " + rP ));
+			kb.add(tweetyParser.parseFormula(tP + " || "   +tW + " || " + tO ));
 			kb.add(tweetyParser.parseFormula("(!" + bP + " && " + "!" +bW + ") => " + bO ));
 			kb.add(tweetyParser.parseFormula("(!" + rP + " && " + "!" +rW + ") => " + rO ));
 
@@ -430,6 +430,8 @@ public class MyAI extends Agent
 		Proposition P0_0 = new Proposition("P0_0");
 		Proposition Scream = new Proposition("S");
 		Proposition haveArrow = new Proposition("haveArrow");
+		Proposition Ok1_0 = new Proposition("ok1_0");
+		Proposition Ok0_1 = new Proposition("ok0_1");
 		Negation noW0_0 = new Negation(W0_0);
 		Negation noP0_0 = new Negation(P0_0);
 		Negation noScream = new Negation(Scream);
@@ -439,6 +441,8 @@ public class MyAI extends Agent
 		kb.add(noW0_0);
 		kb.add(noP0_0);
 		kb.add(haveArrow);
+		kb.add(Ok1_0);
+		kb.add(Ok0_1);
 
 	}
 
@@ -487,7 +491,9 @@ public class MyAI extends Agent
 
 		}
 		Proposition Glitter = new Proposition("G");
+		Negation noG = new Negation(Glitter);
 		Proposition haveArrow  = new Proposition("haveArrow");
+		/*
 		Proposition OK1 = new Proposition(("ok" + (currentX+1) + "_" + currentY));
 		Proposition OK00 = new Proposition(("ok" + 0 + "_" + 0));
 		Proposition OK01 = new Proposition(("ok" + 0 + "_" + 1));
@@ -501,12 +507,15 @@ public class MyAI extends Agent
 		kb.add(OK11);
 		kb.add(OK21);
 
+		 */
+
 
 
 
 
 		//if perceive a glitter in current square, find a path from current square to starting square
 		if(reasoner.query(kb, Glitter)){
+			System.out.println("Gliter is true");
 			plan.add(Action.GRAB);
 			int[] current = {currentX, currentY};
 			int[] starting = {0, 0};
@@ -520,9 +529,9 @@ public class MyAI extends Agent
 
 		//if plan is empty, find a path to an unvisited and safe square
 		else if(plan.isEmpty()){
+			System.out.println("plan is empty");
 			int[] current = {currentX, currentY};
 			int[] goal = null;   // * change
-
 			//finding an unvisited and safe square
 			for (int i = 0; i <= maxX; i++) { //* changed
 				for (int j = 0; j <= maxY; j++) { //* changed
@@ -535,12 +544,14 @@ public class MyAI extends Agent
 					}
 				}
 			}
+			System.out.println("goal is "+goal[0] + goal[1]);
 			if (goal != null) {       //* change
 				MAP map = generateMap();
 				LinkedList<Action> route = plan_route(current, currentDir, goal, map);
 				for (int i = 0; i < route.size(); i++) {
 					plan.add(route.get(i));
 				}
+				System.out.println("the plan is "+ plan.toString());
 			}
 		}
 
