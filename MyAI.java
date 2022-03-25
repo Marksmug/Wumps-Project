@@ -10,6 +10,8 @@ import org.tweetyproject.logics.pl.sat.SatSolver;
 import org.tweetyproject.logics.pl.syntax.*;
 import wumpus.Agent;
 import wumpus.World;
+import java.io.IOException;
+import java.util.List;
 
 import java.util.*;
 
@@ -62,6 +64,7 @@ public class MyAI extends Agent
 
 	AbstractPlReasoner reasoner = new SatReasoner();
 	PlBeliefSet kb = new PlBeliefSet();
+	PlParser tweetyParser = new PlParser();
 
 
 	public void setCurrentX(int currentX) {
@@ -192,7 +195,217 @@ public class MyAI extends Agent
 
 
 	//tell function
-	public void tell(int i, int j, boolean stench, boolean breeze, boolean glitter, boolean bump, boolean scream) {
+	public void tell(int i, int j, boolean stench, boolean breeze, boolean glitter, boolean bump, boolean scream)throws IOException{
+
+
+		String cB = 'B' + toString(i) +'_'+ toString(j);
+		String cS = 'S' + toString(i) +'_'+ toString(j);
+		String cW = 'W' +  toString(i) +'_'+ toString(j);
+		String cP = 'P' + toString(i) +'_'+ toString(j);
+
+
+		//Propositions for adjacent Breeze Squares
+		String tB = 'B' + toString(i) +'_'+ toString(j+1);
+		String bB = 'B' + toString(i) +'_'+ toString(j-1);
+		String lB = 'B' + toString(i-1) +'_'+ toString(j);
+		String rB = 'B' + toString(i+1) +'_'+ toString(j);
+
+		//Propositions variables for adjacent  Stench Squares
+
+		//String tS = 'S' + toString(i) +'_'+ toString(j+1);
+		//String bS = 'S' + toString(i) +'_'+ toString(j-1);
+		//String lS = 'S' + toString(i-1) +'_'+ toString(j);
+		//String rS = 'S' + toString(i+1) +'_'+ toString(j);
+
+		//Propositions variables for adjacent Wumpus Squares
+
+		String tW = 'W' + toString(i) +'_'+ toString(j+1);
+		String bW = 'W' + toString(i) +'_'+ toString(j-1);
+		String lW = 'W' + toString(i-1) +'_'+ toString(j);
+		String rW = 'W' + toString(i+1) +'_'+ toString(j);
+
+		//OK squares
+		String tO = "ok" + toString(i) +'_'+ toString(j+1);
+		String bO = "ok" + toString(i) +'_'+ toString(j-1);
+		String lO = "ok" + toString(i-1) +'_'+ toString(j);
+		String rO = "ok" + toString(i+1) +'_'+ toString(j);
+
+
+		//Propositions variables for new Pitt Squares
+
+		String tP = 'P' + toString(i) +'_'+ toString(j+1);
+		String bP = 'P' + toString(i) +'_'+ toString(j-1);
+		String lP = 'P' + toString(i-1) +'_'+ toString(j);
+		String rP = 'P' + toString(i+1) +'_'+ toString(j);
+
+
+		//Update KB on new position so No Wumpus and No Pit at current location
+		Proposition f1 = new Proposition(cP);
+		Proposition f2 = new Proposition(cW);
+		Negation nf1 = new Negation(f1);
+		Negation nf2 = new Negation(f2);
+		kb.add(nf1,nf2);
+
+		//Glitter update:
+		if (glitter == true){
+			kb.add(tweetyParser.parseFormula("G" ));
+		}
+
+
+		//Stench sensor update:
+
+		Proposition s1 = new Proposition(cS);
+		//Middle of World Game
+		if(i>0 & j>0){
+
+			if (!stench){
+
+				Negation ns1 = new Negation(s1);
+				kb.add(ns1);
+				kb.add(tweetyParser.parseFormula("!" + tW + " && " + "!" +bW + " && " + "!" + lW + " && " + "!" + rW ));
+
+
+			}
+			else{
+				if (!scream){
+
+					kb.add(tweetyParser.parseFormula( "(S || ("+ tW + " || " + bW + " || " + lW + " || " + rW +")"));
+					kb.add(tweetyParser.parseFormula("!" + tW + " || " + "!" +bW));
+					kb.add(tweetyParser.parseFormula("!" +bW + " || " + "!" + lW));
+					kb.add(tweetyParser.parseFormula("!" +bW + " || " + "!" + rW));
+					kb.add(tweetyParser.parseFormula("!" + lW + " || " + "!" + rW));
+					kb.add(tweetyParser.parseFormula("!" + tW + " || " + "!" + rW ));
+					kb.add(tweetyParser.parseFormula("!" + tW + " || " + "!" + lW));
+					kb.add(tweetyParser.parseFormula( "(!S || (!" + tW + " && " + "!" +bW + " && " + "!" + lW + " && " + "!" + rW + ")"));
+				}
+				else{
+					kb.remove(tweetyParser.parseFormula("!S"));
+					kb.add(tweetyParser.parseFormula("S"));
+				}
+
+			}
+			Proposition b1 = new Proposition(cB);
+
+			if (!breeze){
+				Negation nb1 = new Negation(b1);
+				kb.add(nb1);
+				kb.add(tweetyParser.parseFormula("!" + tP + " && " + "!" +bP + " && " + "!" + lP + " && " + "!" + rP ));
+
+				//adds the OK statements
+
+				if (!stench){
+					kb.add(tweetyParser.parseFormula(tO + " && " +bO + " && " +  lO + " && " + rO ));
+				}
+
+			}
+			else{
+				kb.add(s1);
+				kb.add(tweetyParser.parseFormula( tP + " || " + bP + " || " + lP + " || " + rP ));
+			}
+			kb.add(tweetyParser.parseFormula("(!" + tP + " && " + "!" +tW + ") => " + tO ));
+			kb.add(tweetyParser.parseFormula("(!" + bP + " && " + "!" +bW + ") => " + bO ));
+			kb.add(tweetyParser.parseFormula("(!" + lP + " && " + "!" +lW + ") => " + lO ));
+			kb.add(tweetyParser.parseFormula("(!" + rP + " && " + "!" +rW + ") => " + rO ));
+			//Update KB When we're in the bottom edge of world
+		} else if (i == 0 & j>0){
+
+			if (!stench){
+
+				Negation ns1 = new Negation(s1);
+				kb.add(ns1);
+				kb.add(tweetyParser.parseFormula("!" + tW + " && " + "!" + lW + " && " + "!" + rW ));
+
+			}
+			else{
+				kb.add(s1);
+				if (!scream) {
+
+					kb.add(tweetyParser.parseFormula("(S || (" + tW + " || " + lW + " || " + rW + ") && S"));
+					kb.add(tweetyParser.parseFormula(tW + " || " + lW + " || " + rW));
+					kb.add(tweetyParser.parseFormula("!" + lW + " || " + "!" + rW));
+					kb.add(tweetyParser.parseFormula("!" + tW + " || " + "!" + rW));
+					kb.add(tweetyParser.parseFormula("!" + lW + " || " + "!" + tW));
+					kb.add(tweetyParser.parseFormula( "(!S || (!" + tW + " && " + "!" + lW + " && " + "!" + rW + ") && S"));
+				}
+				else{
+					kb.add(tweetyParser.parseFormula("S"));
+				}
+
+			}
+
+
+			Proposition b1 = new Proposition(cB);
+
+			if (!breeze){
+				Negation nb1 = new Negation(b1);
+				kb.add(nb1);
+				kb.add(tweetyParser.parseFormula("!" + tP  + " && " + "!" + lP + " && " + "!" + rP ));
+				if (!stench){
+					kb.add(tweetyParser.parseFormula(tO + " && " +  lO + " && " + rO ));
+				}
+
+			}
+			else{
+				kb.add(s1);
+				kb.add(tweetyParser.parseFormula( tP + " || " + lP + " || " + rP ));
+			}
+
+			kb.add(tweetyParser.parseFormula("(!" + tP + " && " + "!" +tW + ") => " + tO ));
+			kb.add(tweetyParser.parseFormula("(!" + lP + " && " + "!" +lW + ") => " + lO ));
+			kb.add(tweetyParser.parseFormula("(!" + rP + " && " + "!" +rW + ") => " + rO ));
+
+			//Update KB when we're at the left edge of Wumpus World
+		} else if(i>0 & j==0){
+
+			if (!stench){
+
+				Negation ns1 = new Negation(s1);
+				kb.add(ns1);
+				kb.add(tweetyParser.parseFormula("!" + tW + " && " + "!" +bW  + " && " + "!" + rW ));
+
+			}
+			else{
+				kb.add(s1);
+				if (!scream) {
+					//at least one Wumpu
+					kb.add(tweetyParser.parseFormula("(S || (" + tW + " || " + bW + " || " + rW + ") && S"));
+					//only one Wumpus
+					kb.add(tweetyParser.parseFormula("!" + tW + " || " + "!" + rW));
+					kb.add(tweetyParser.parseFormula("!" + tW + " || " + "!" + bW));
+					kb.add(tweetyParser.parseFormula("!" + bW + " || " + "!" + rW));
+					kb.add(tweetyParser.parseFormula("(!S || (!" + tW + " && " + "!" + bW + " && " + "!" + rW + ") && S"));
+				}
+				else{
+					kb.add(tweetyParser.parseFormula("S"));
+				}
+
+
+
+			}
+
+
+			Proposition b1 = new Proposition(cB);
+
+			if (!breeze){
+				Negation nb1 = new Negation(b1);
+				kb.add(nb1);
+				kb.add(tweetyParser.parseFormula("!" + tP + " && " + "!" +bP + " && " + "!" + rP ));
+
+				if (!stench){
+					kb.add(tweetyParser.parseFormula(tO + " && " +bO  + " && " + rO ));
+				}
+
+			}
+			else{
+				kb.add(b1);
+				kb.add(tweetyParser.parseFormula( tP + " || " + bP  + " || " + rP ));
+			}
+			//kb.add(tweetyParser.parseFormula( tP + " || " + bP  + " || " + rP ));
+			kb.add(tweetyParser.parseFormula(tP + " || "   +tW + " || " + tO ));
+			kb.add(tweetyParser.parseFormula("(!" + bP + " && " + "!" +bW + ") => " + bO ));
+			kb.add(tweetyParser.parseFormula("(!" + rP + " && " + "!" +rW + ") => " + rO ));
+
+		}
 	}
 
 
@@ -215,8 +428,10 @@ public class MyAI extends Agent
 		findMaxY =false;
 		Proposition W0_0 = new Proposition("W0_0");
 		Proposition P0_0 = new Proposition("P0_0");
-		Proposition Scream = new Proposition("Scream");
+		Proposition Scream = new Proposition("S");
 		Proposition haveArrow = new Proposition("haveArrow");
+		Proposition Ok1_0 = new Proposition("ok1_0");
+		Proposition Ok0_1 = new Proposition("ok0_1");
 		Negation noW0_0 = new Negation(W0_0);
 		Negation noP0_0 = new Negation(P0_0);
 		Negation noScream = new Negation(Scream);
@@ -226,6 +441,8 @@ public class MyAI extends Agent
 		kb.add(noW0_0);
 		kb.add(noP0_0);
 		kb.add(haveArrow);
+		kb.add(Ok1_0);
+		kb.add(Ok0_1);
 
 	}
 
@@ -236,8 +453,7 @@ public class MyAI extends Agent
 		boolean glitter,
 		boolean bump,
 		boolean scream
-	)
-	{
+	) {
 
 
 		//testing move
@@ -269,9 +485,15 @@ public class MyAI extends Agent
 		//adding unvisit square into knowledge base;
 		unvisit(bump);
 		//update the knowledge base by perceptions;  * need a tell function from knowledge base
-		//tell(stench, breeze, glitter, scream);
+		try {
+			tell(currentX, currentY, stench, breeze, glitter, bump, scream);
+		}catch(IOException e){
+
+		}
 		Proposition Glitter = new Proposition("G");
+		Negation noG = new Negation(Glitter);
 		Proposition haveArrow  = new Proposition("haveArrow");
+		/*
 		Proposition OK1 = new Proposition(("ok" + (currentX+1) + "_" + currentY));
 		Proposition OK00 = new Proposition(("ok" + 0 + "_" + 0));
 		Proposition OK01 = new Proposition(("ok" + 0 + "_" + 1));
@@ -285,12 +507,15 @@ public class MyAI extends Agent
 		kb.add(OK11);
 		kb.add(OK21);
 
+		 */
+
 
 
 
 
 		//if perceive a glitter in current square, find a path from current square to starting square
 		if(reasoner.query(kb, Glitter)){
+			System.out.println("Gliter is true");
 			plan.add(Action.GRAB);
 			int[] current = {currentX, currentY};
 			int[] starting = {0, 0};
@@ -304,9 +529,9 @@ public class MyAI extends Agent
 
 		//if plan is empty, find a path to an unvisited and safe square
 		else if(plan.isEmpty()){
+			System.out.println("plan is empty");
 			int[] current = {currentX, currentY};
 			int[] goal = null;   // * change
-
 			//finding an unvisited and safe square
 			for (int i = 0; i <= maxX; i++) { //* changed
 				for (int j = 0; j <= maxY; j++) { //* changed
@@ -319,51 +544,66 @@ public class MyAI extends Agent
 					}
 				}
 			}
+			System.out.println("goal is "+goal[0] + goal[1]);
 			if (goal != null) {       //* change
 				MAP map = generateMap();
 				LinkedList<Action> route = plan_route(current, currentDir, goal, map);
 				for (int i = 0; i < route.size(); i++) {
 					plan.add(route.get(i));
 				}
+				System.out.println("the plan is "+ plan.toString());
 			}
 		}
 
 		if (plan.isEmpty() && reasoner.query(kb, haveArrow)) {
-			// check if the agent is in the square adjacent to the Wumpus
-			Proposition upperSquare = new Proposition("!W" + currentX + "_" + (currentY + 1));
-			Proposition lowerSquare = new Proposition("!W" + currentX + "_" + (currentY - 1));
-			Proposition rightSquare = new Proposition("!W" + (currentX + 1) + "_" + currentY);
-			Proposition leftSquare = new Proposition("!W" + (currentX - 1) + "_" + currentY);
-
-			if (!reasoner.query(kb, upperSquare)) {
-				List<Action> actions = turnToWumpusSquare(3);
-				plan.addAll(actions);
-				plan.add(Action.SHOOT);
-				//tell knowledge base that we dont have an arrow anymore
-
-			} else if (!reasoner.query(kb, lowerSquare)) {
-				List<Action> actions = turnToWumpusSquare(1);
-				plan.addAll(actions);
-				plan.add(Action.SHOOT);
-				//tell knowledge base that we dont have an arrow anymore
-
-
-
-			} else if (!reasoner.query(kb, rightSquare)) {
-				List<Action> actions = turnToWumpusSquare(0);
-				plan.addAll(actions);
-				plan.add(Action.SHOOT);
-				//tell knowledge base that we dont have an arrow anymore
-
-			} else if (!reasoner.query(kb, leftSquare)) {
-				List<Action> actions = turnToWumpusSquare(2);
-				plan.addAll(actions);
-				plan.add(Action.SHOOT);
-				//tell knowledge base that we dont have an arrow anymore
-
-			} else {
-				// do nothing
+			int[] current = {currentX, currentY};
+			int closestX = currentX;
+			int closestY = currentY;
+			for (int i = 0; i <= maxX; i++) {
+				for (int j = 0; j <= maxY; j++) {
+					Proposition wumpus = new Proposition("!W" + maxX + "_" + maxY);
+					if (!reasoner.query(kb, wumpus)) {
+						if (Math.abs(i - currentX) < Math.abs(closestX - currentX)) {
+							closestX = i;
+						}
+						if (Math.abs(j - currentY) < Math.abs(closestY - currentY)) {
+							closestY = j;
+						}
+					}
+				}
 			}
+			//The direction the agent is facing: 0 - right, 1 - down, 2 - left, 3 - up
+			int wumpusDir;
+			int[] goal;
+			if (Math.abs(closestY - currentY) > Math.abs(closestX - currentX)) {
+				goal = new int[]{closestX, currentY};
+				if(currentX > closestX){
+					wumpusDir = 2;
+				} else {
+					wumpusDir = 0;
+				}
+			} else {
+				goal = new int[]{currentX, closestY};
+				if(currentY > closestY){
+					wumpusDir = 1;
+				} else {
+					wumpusDir = 3;
+				}
+			}
+
+
+			if (!(goal[0] == currentX && goal[1] == currentY)) {
+				MAP map = generateMap();
+				LinkedList<Action> route = plan_route(current, currentDir, goal, map);
+				for (int i = 0; i < route.size(); i++) {
+					plan.add(route.get(i));
+				}
+			}
+
+			List<Action> actions = turnToWumpusSquare(wumpusDir);
+			plan.addAll(actions);
+			plan.add(Action.SHOOT);
+			kb.remove(haveArrow);
 
 		}
 
