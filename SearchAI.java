@@ -1,4 +1,4 @@
-package fullObservability;
+package partialObservability;
 
 import wumpus.Agent;
 import wumpus.World;
@@ -156,14 +156,25 @@ class State implements Cloneable{
 class Problem extends Agent{
     State INITIAL;
 
+    private int goalX;      //x coordinate of destination
+    private int goalY;      //y coordinate of destination
+
+
+    public void setGoal(int x, int y){
+        goalX = x;
+        goalY = y;
+    }
+
+
     //Goal test function: return true if there is no gold in current state, otherwise false
     public void setINITIAL(State s){
         this.INITIAL = s;
     }
 
     public boolean isGoal(State s){
-        //if the gold is grabbed and the agent is alive, return true
-        if (s.goldTile[0] == -1 && s.goldTile[1] == -1 && s.agentAlive == true){
+        if (s.agentTile[0] == goalX && s.agentTile[1] == goalY && s.agentAlive == true){
+
+            //agent.x == goalX & agent.y ==  & agent is alive
             return  true;
         }
         else{
@@ -179,7 +190,7 @@ class Problem extends Agent{
         availableActions.add(Action.TURN_RIGHT);
         availableActions.add(Action.FORWARD);
         availableActions.add(Action.GRAB);
-        availableActions.add(Action.SHOOT);
+        //availableActions.add(Action.SHOOT);
         availableActions.add(Action.CLIMB);
 
         return availableActions;
@@ -256,7 +267,7 @@ class Problem extends Agent{
             }
             if(s.agentTile[1] == s.wumpsTile[1]){
                 if((s.agentDir == 0 && s.agentTile[0] < s.wumpsTile[0])
-                        ||(s.agentDir == 2 && s.agentTile[0] > s.wumpsTile[0])){
+                ||(s.agentDir == 2 && s.agentTile[0] > s.wumpsTile[0])){
                     newS.killWumps();
                 }
 
@@ -354,13 +365,15 @@ class Node {
 
 public class SearchAI extends Agent {
     private ListIterator<Action> planIterator;
+    public LinkedList<Action> plan;
 
-    public SearchAI(World.Tile[][] board) {
+
+    public SearchAI(int[] current, int direction, int[] goal, MAP.Tile[][] board) {
 
         /* The world is board[coloumn][row] with initial position (bottom left) being board[0][0] */
         /* Set the intial state for the problem */
-        int col = board.length;       //get number of column from board
-        int row = board[1].length;    //get number of row from board
+        int col = board.length;       //get max column from board
+        int row = board[1].length;    //get max row from board
         Problem p = new Problem();
         State s = new State();
         s.setColDimension(col);       //set column dimension for state
@@ -369,31 +382,29 @@ public class SearchAI extends Agent {
         int pitNumber = 0;                  //set pitt number
 
         //agent always start from (0,0)
-        s.setAgentTile(0,0);
+        s.setAgentTile(current[0], current[1]);
         //agent always faces right at beginning
-        s.setAgentDir(0);
+        s.setAgentDir(direction);
         //extract goldTile, wumpsTile, pitTiles from the board
         for (int i = 0; i < col; i++) {
             for (int j = 0; j < row; j++) {
-                if (board[i][j].getGold() == true) {
-                    s.setGoldTile(i, j);
-                }
-                if (board[i][j].getWumpus() == true) {
-                    s.setWumpsTile(i, j);
-                }
-                if (board[i][j].getPit() == true) {
-                    pits[pitNumber][0] = i;
-                    pits[pitNumber][1] = j;
-                    pitNumber++;
+                    if (board[i][j].getPit() == true) {
+                        pits[pitNumber][0] = i;
+                        pits[pitNumber][1] = j;
+                        pitNumber++;
+                    }else{
+
+                    }
                 }
             }
-        }
         s.setPitNumber(pitNumber);
         s.setPitsTile(pits);
+        s.setWumpsTile(-1, -1);
         p.setINITIAL(s);
+        p.setGoal(goal[0], goal[1]);
 
         /* Start the algorithm
-         */
+        */
 
         Node currentNode = bestFirstSearch(p);
         ArrayList<Action> path = new ArrayList<Action>();
@@ -403,46 +414,19 @@ public class SearchAI extends Agent {
         }
         System.out.println();
         for (int i = 0; i < path.size(); i++) {
-            System.out.println(path.get(i));
-        }
+               System.out.println(path.get(i));
+            }
 
 
-        LinkedList<Action> plan;
+
 
         // Adding the path to the gold //
-        plan = new LinkedList<Action>();
-        for (int i = path.size() - 1; i >= 0; i--) {
-            if (path.get(i) != null) {
-                plan.add(path.get(i));
-            }
-        }
-
-        // Turn to opposite direction
-        plan.add(Action.TURN_RIGHT);
-        plan.add(Action.TURN_RIGHT);
-
-        //adding the path to the starting point from gold tile
-        for (int i = 1; i< path.size(); i++)
-            if (path.get(i) != null && path.get(i) != Action.SHOOT){
-                if (path.get(i) == Action.TURN_RIGHT){
-                    plan.add(Action.TURN_LEFT);
-                }
-                else if (path.get(i) == Action.TURN_LEFT){
-                    plan.add(Action.TURN_RIGHT);
-                }
-                //if the last action is turning direction, then skip it
-                else if (i == path.size() - 1 && (path.get(i) == Action.TURN_LEFT || path.get(i) == Action.TURN_RIGHT )){
-                    break;
-                }
-                else{
-                    plan.add(path.get(i));
-                }
-
-            }
-        plan.add(Action.CLIMB);
-
-
-
+         plan = new LinkedList<Action>();
+         for (int i = path.size() - 1; i >= 0; i--) {
+             if (path.get(i) != null) {
+                 plan.add(path.get(i));
+             }
+         }
 
 
         // This must be the last instruction.
@@ -482,7 +466,31 @@ public class SearchAI extends Agent {
     }
 
     @Override
-    public Agent.Action getAction(boolean stench, boolean breeze, boolean glitter, boolean bump, boolean scream) {
+    public Action getAction(boolean stench, boolean breeze, boolean glitter, boolean bump, boolean scream) {
         return planIterator.next();
     }
 
+    public static void printDir(State s){
+        switch (s.agentDir)
+        {
+            case 0:
+                System.out.println("AgentDir: Right");
+                break;
+
+            case 1:
+                System.out.println("AgentDir: Down");
+                break;
+
+            case 2:
+                System.out.println("AgentDir: Left");
+                break;
+
+            case 3:
+                System.out.println("AgentDir: Up");
+                break;
+
+            default:
+                System.out.println("AgentDir: Invalid");
+        }
+    }
+}
