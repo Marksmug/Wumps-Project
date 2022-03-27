@@ -179,7 +179,7 @@ public class MyAI extends Agent
 			kb.remove(beyond);
 		}
 		//if doesn't find maxX and maxY or current x is smaller than maxX and current y is smaller than maxY
-		if((maxX == 0 && maxY == 0) || (currentX < maxX && currentY < maxY)) {
+		if(currentX <= maxX && currentY <= maxY) {
 			int[] currentTile = new int[]{currentX, currentY};
 			Proposition current = new Proposition("unvisited" + toString(currentTile[0]) + "_" + toString(currentTile[1]));
 			Negation negCurrent = new Negation(current);
@@ -244,6 +244,9 @@ public class MyAI extends Agent
 		Proposition f2 = new Proposition(cW);
 		Negation nf1 = new Negation(f1);
 		Negation nf2 = new Negation(f2);
+
+		Proposition s1 = new Proposition(cS);
+
 		kb.add(nf1,nf2);
 
 		//Glitter update:
@@ -253,8 +256,56 @@ public class MyAI extends Agent
 
 
 		//Stench sensor update:
+		if(i == 0 & j == 0){
+			if (!stench){
 
-		Proposition s1 = new Proposition(cS);
+				Negation ns1 = new Negation(s1);
+				kb.add(ns1);
+				kb.add(tweetyParser.parseFormula("!" + tW +  " && " + "!" + rW ));
+
+
+			}
+			else{
+				if (!scream){
+
+					kb.add(tweetyParser.parseFormula( "S || "+ tW + " || "  + rW ));
+
+
+
+
+					kb.add(tweetyParser.parseFormula("!" + tW + " || " + "!" + rW ));
+
+					kb.add(tweetyParser.parseFormula( "!S || (!" + tW + " && " +  rW + ")"));
+				}
+				else{
+					kb.remove(tweetyParser.parseFormula("!S"));
+					kb.add(tweetyParser.parseFormula("S"));
+				}
+
+			}
+			Proposition b1 = new Proposition(cB);
+
+			if (!breeze){
+				Negation nb1 = new Negation(b1);
+				kb.add(nb1);
+				kb.add(tweetyParser.parseFormula("!" + tP + " && " +  "!" + rP ));
+
+				//adds the OK statements
+
+				if (!stench){
+					kb.add(tweetyParser.parseFormula(tO + " && " + rO ));
+				}
+
+			}
+			else{
+				kb.add(b1);
+				kb.add(tweetyParser.parseFormula( tP + " || " +  rP ));
+			}
+			kb.add(tweetyParser.parseFormula("(!" + tP + " && " + "!" +tW + ") => " + tO ));
+			kb.add(tweetyParser.parseFormula("(!" + rP + " && " + "!" +rW + ") => " + rO ));
+		}
+
+
 		//Middle of World Game
 		if(i>0 & j>0){
 
@@ -269,14 +320,14 @@ public class MyAI extends Agent
 			else{
 				if (!scream){
 
-					kb.add(tweetyParser.parseFormula( "(S || ("+ tW + " || " + bW + " || " + lW + " || " + rW +")"));
+					kb.add(tweetyParser.parseFormula( "S || "+ tW + " || " + bW + " || " + lW + " || " + rW ));
 					kb.add(tweetyParser.parseFormula("!" + tW + " || " + "!" +bW));
 					kb.add(tweetyParser.parseFormula("!" +bW + " || " + "!" + lW));
 					kb.add(tweetyParser.parseFormula("!" +bW + " || " + "!" + rW));
 					kb.add(tweetyParser.parseFormula("!" + lW + " || " + "!" + rW));
 					kb.add(tweetyParser.parseFormula("!" + tW + " || " + "!" + rW ));
 					kb.add(tweetyParser.parseFormula("!" + tW + " || " + "!" + lW));
-					kb.add(tweetyParser.parseFormula( "(!S || (!" + tW + " && " + "!" +bW + " && " + "!" + lW + " && " + "!" + rW + ")"));
+					kb.add(tweetyParser.parseFormula( "!S || (!" + tW + " && " + "!" +bW + " && " + "!" + lW + " && " + "!" + rW + ")"));
 				}
 				else{
 					kb.remove(tweetyParser.parseFormula("!S"));
@@ -299,7 +350,7 @@ public class MyAI extends Agent
 
 			}
 			else{
-				kb.add(s1);
+				kb.add(b1);
 				kb.add(tweetyParser.parseFormula( tP + " || " + bP + " || " + lP + " || " + rP ));
 			}
 			kb.add(tweetyParser.parseFormula("(!" + tP + " && " + "!" +tW + ") => " + tO ));
@@ -320,12 +371,12 @@ public class MyAI extends Agent
 				kb.add(s1);
 				if (!scream) {
 
-					kb.add(tweetyParser.parseFormula("(S || (" + tW + " || " + lW + " || " + rW + ") && S"));
+					kb.add(tweetyParser.parseFormula("S || " + tW + " || " + lW + " || " + rW ));
 					kb.add(tweetyParser.parseFormula(tW + " || " + lW + " || " + rW));
 					kb.add(tweetyParser.parseFormula("!" + lW + " || " + "!" + rW));
 					kb.add(tweetyParser.parseFormula("!" + tW + " || " + "!" + rW));
 					kb.add(tweetyParser.parseFormula("!" + lW + " || " + "!" + tW));
-					kb.add(tweetyParser.parseFormula( "(!S || (!" + tW + " && " + "!" + lW + " && " + "!" + rW + ") && S"));
+					kb.add(tweetyParser.parseFormula( "!S || (!" + tW + " && " + "!" + lW + " && " + "!" + rW + ")"));
 				}
 				else{
 					kb.add(tweetyParser.parseFormula("S"));
@@ -346,7 +397,7 @@ public class MyAI extends Agent
 
 			}
 			else{
-				kb.add(s1);
+				kb.add(b1);
 				kb.add(tweetyParser.parseFormula( tP + " || " + lP + " || " + rP ));
 			}
 
@@ -368,12 +419,12 @@ public class MyAI extends Agent
 				kb.add(s1);
 				if (!scream) {
 					//at least one Wumpu
-					kb.add(tweetyParser.parseFormula("(S || (" + tW + " || " + bW + " || " + rW + ") && S"));
+					kb.add(tweetyParser.parseFormula("S || " + tW + " || " + bW + " || " + rW ));
 					//only one Wumpus
 					kb.add(tweetyParser.parseFormula("!" + tW + " || " + "!" + rW));
 					kb.add(tweetyParser.parseFormula("!" + tW + " || " + "!" + bW));
 					kb.add(tweetyParser.parseFormula("!" + bW + " || " + "!" + rW));
-					kb.add(tweetyParser.parseFormula("(!S || (!" + tW + " && " + "!" + bW + " && " + "!" + rW + ") && S"));
+					kb.add(tweetyParser.parseFormula("!S || (!" + tW + " && " + "!" + bW + " && " + "!" + rW + ")"));
 				}
 				else{
 					kb.add(tweetyParser.parseFormula("S"));
@@ -430,6 +481,7 @@ public class MyAI extends Agent
 		Proposition P0_0 = new Proposition("P0_0");
 		Proposition Scream = new Proposition("S");
 		Proposition haveArrow = new Proposition("haveArrow");
+		Proposition Ok0_0 = new Proposition("ok0_0");
 		Proposition Ok1_0 = new Proposition("ok1_0");
 		Proposition Ok0_1 = new Proposition("ok0_1");
 		Negation noW0_0 = new Negation(W0_0);
@@ -441,8 +493,9 @@ public class MyAI extends Agent
 		kb.add(noW0_0);
 		kb.add(noP0_0);
 		kb.add(haveArrow);
-		kb.add(Ok1_0);
-		kb.add(Ok0_1);
+		//kb.add(Ok1_0);
+		//kb.add(Ok0_1);
+		kb.add(Ok0_0);
 
 	}
 
@@ -525,6 +578,7 @@ public class MyAI extends Agent
 				plan.add(route.get(i));
 			}
 			plan.add(Action.CLIMB);
+			kb.remove(Glitter);
 		}
 
 		//if plan is empty, find a path to an unvisited and safe square
@@ -544,8 +598,9 @@ public class MyAI extends Agent
 					}
 				}
 			}
-			System.out.println("goal is "+goal[0] + goal[1]);
-			if (goal != null) {       //* change
+
+			if (goal != null) {
+				System.out.println("goal is "+goal[0] + goal[1]);//* change
 				MAP map = generateMap();
 				LinkedList<Action> route = plan_route(current, currentDir, goal, map);
 				for (int i = 0; i < route.size(); i++) {
